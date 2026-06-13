@@ -63,7 +63,7 @@ export class ObsidianTaskAdapter {
 
     async generateTasksList(includeFilter: string[], pathFilter: string[], includeTags: string[], excludeTags: string[]) {
         this.tasksList.length = 0;
-        const files = app.vault.getMarkdownFiles()
+        const files = this.app.vault.getMarkdownFiles()
         let filteredFiles = files;
         if (includeFilter.length !== 0)
             filteredFiles = filteredFiles.filter(this.includePathsFilter(includeFilter));
