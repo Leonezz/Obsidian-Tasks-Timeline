@@ -74,19 +74,21 @@ export class ObsidianTaskAdapter {
         if (excludeTags.length !== 0)
             filteredFiles = filteredFiles.filter(this.fileExcludeTagsFilter(excludeTags));
 
-        filteredFiles.forEach(async (file: TFile) => {
+        await Promise.all(filteredFiles.map(async (file: TFile) => {
             const link = Link.file(file.path);
-            this.app.vault.cachedRead(file)
-                .then((content: string) => {
-                    const cache = this.app.metadataCache.getFileCache(file);
-                    cache?.listItems?.forEach(
-                        this.fromItemCache(link, file.path, content, cache.sections, cache.links, cache.frontmatter, cache.tags)
-                    );
-                })
-                .catch(reason => {
-                    console.error("Read file from obsidian cache failed: " + reason)
-                })
-        })
+            try {
+                const activeEditor = this.app.workspace.activeEditor;
+                const content = activeEditor?.file?.path === file.path && activeEditor.editor
+                    ? activeEditor.editor.getValue()
+                    : await this.app.vault.cachedRead(file);
+                const cache = this.app.metadataCache.getFileCache(file);
+                cache?.listItems?.forEach(
+                    this.fromItemCache(link, file.path, content, cache.sections, cache.links, cache.frontmatter, cache.tags)
+                );
+            } catch (reason) {
+                console.error("Read file from obsidian cache failed: " + reason)
+            }
+        }));
     }
 
     /**
@@ -104,6 +106,7 @@ export class ObsidianTaskAdapter {
      */
     private fromItemCache(link: Link, filePath: string, fileContent: string,
         sections?: SectionCache[], links?: LinkCache[], fontmatter?: FrontMatterCache, tagsCache?: TagCache[]) {
+        const fileLines = fileContent.split('\n');
         return (item: ListItemCache) => {
             if (!(item.task)) return null;
             const itemPos = item.position;
@@ -139,7 +142,7 @@ export class ObsidianTaskAdapter {
             };
 
             const sliceFileContent = (pos: Pos) => {
-                return fileContent.slice(pos.start.offset, pos.end.offset);
+                return fileLines.slice(pos.start.line, pos.end.line + 1).join('\n');
             };
 
             const itemText = sliceFileContent(itemPos);

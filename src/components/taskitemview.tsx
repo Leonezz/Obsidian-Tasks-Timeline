@@ -142,19 +142,40 @@ const defaultStripWithIconProps = {
 }
 
 type StripWithIconProps = Readonly<typeof defaultStripWithIconProps>
-class StripWithIcon extends React.Component<StripWithIconProps> {
+type StripWithIconState = {
+    checked: boolean,
+}
+class StripWithIcon extends React.Component<StripWithIconProps, StripWithIconState> {
+    constructor(props: StripWithIconProps) {
+        super(props);
+        this.state = {
+            checked: props.marker !== ' ',
+        };
+        this.handleToggle = this.handleToggle.bind(this);
+    }
+
+    componentDidUpdate(prevProps: StripWithIconProps): void {
+        if (prevProps.marker === this.props.marker) return;
+        const checked = this.props.marker !== ' ';
+        if (checked !== this.state.checked) this.setState({ checked });
+    }
+
+    handleToggle(): void {
+        this.setState({ checked: !this.state.checked });
+        this.props.onToggle();
+    }
 
     render(): React.ReactNode {
         return (
             <div className='timeline' >
-                <input id="statusMarker" type="checkbox" className={this.props.useBuiltinStyle ? "icon" : ""}
+                <input type="checkbox" className={this.props.useBuiltinStyle ? "icon" : ""}
                     data-task={this.props.marker}
-                    defaultChecked={this.props.marker !== ' '} onClick={() => {
-                        if (!this.props.useBuiltinStyle) this.props.onToggle();
+                    checked={this.state.checked} onChange={() => {
+                        if (!this.props.useBuiltinStyle) this.handleToggle();
                     }}></input>
                 {this.props.useBuiltinStyle &&
-                    <label htmlFor="statusMarker" className="icon" onClick={() => {
-                        if (this.props.useBuiltinStyle) this.props.onToggle();
+                    <label className="icon" onClick={() => {
+                        if (this.props.useBuiltinStyle) this.handleToggle();
                     }}>{Icons.getTaskStatusIcon(this.props.status)}</label>}
             </div>
         )
