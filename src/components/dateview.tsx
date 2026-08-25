@@ -78,7 +78,7 @@ class NormalDateContent extends React.Component<NormalDateContentProps> {
             <TaskListContext.Consumer>
                 {({ taskList }) => (
                     <div className='content'>
-                        {taskList.map((t, i) => <TaskItemView key={i} taskItem={t} />)}
+                        {taskList.map((t) => <TaskItemView key={`${t.path}:${t.line}`} taskItem={t} />)}
                     </div>
                 )}
             </TaskListContext.Consumer>
