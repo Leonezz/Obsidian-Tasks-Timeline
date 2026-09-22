@@ -1,4 +1,4 @@
-import moment, { Moment } from 'moment';
+import { moment } from 'obsidian';
 import * as React from 'react';
 import * as TaskMapable from '../../../utils/taskmapable';
 import { innerDateFormat } from '../../../utils/tasks';
@@ -21,7 +21,7 @@ export class YearView extends React.Component<YearViewProps> {
                     t.created && daysOfThisYear.add(t.created.format(innerDateFormat));
                     t.start && daysOfThisYear.add(t.start.format(innerDateFormat));
                     t.completion && daysOfThisYear.add(t.completion.format(innerDateFormat));
-                    t.dates.forEach((d: Moment, k: string) => {
+                    t.dates.forEach((d: moment.Moment, k: string) => {
                         daysOfThisYear.add(d.format(innerDateFormat));
                     });
                 })

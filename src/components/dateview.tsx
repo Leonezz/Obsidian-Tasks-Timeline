@@ -1,4 +1,4 @@
-import moment from 'moment';
+import { moment } from 'obsidian';
 import * as React from 'react';
 import { getFileTitle } from '../../../dataview-util/dataview';
 import { TaskStatus, doneDateSymbol, dueDateSymbol, recurrenceSymbol, scheduledDateSymbol, startDateSymbol } from '../../../utils/tasks';
