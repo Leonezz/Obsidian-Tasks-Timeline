@@ -3,7 +3,7 @@ import * as React from "react";
 import { getFileTitle } from "../../../dataview-util/dataview";
 import { TasksTimelineView } from "../../../src/views";
 import { TaskDataModel, recurrenceSymbol } from "../../../utils/tasks";
-import { relativeDate } from "../../../utils/utils";
+import { isTagHidden, relativeDate } from "../../../utils/utils";
 import * as Icons from './asserts/icons';
 import { TaskItemEventHandlersContext, UserOptionContext } from "./context";
 
@@ -97,7 +97,7 @@ export class TaskItemView extends React.Component<TaskItemProps, TaskItemState> 
                                                 label={item.priority.length > 0 ? item.priority + " Priority" : "No Priority"}
                                                 icon={Icons.priorityIcon} />}
                                         <FileBadge filePath={item.path} subPath={item.section.subpath || ""} />
-                                        {[...new Set(tags)].filter(t => !hideTags.includes(t)).map((t, i) => {
+                                        {[...new Set(tags)].filter(t => !isTagHidden(t, hideTags)).map((t, i) => {
                                             return < TagBadge tag={t} key={i} />
                                         }
                                         )}
@@ -251,7 +251,7 @@ type ModifyBadgeProps = Readonly<typeof defaultModifyBadgeProps>;
 class ModifyBadge extends React.Component<ModifyBadgeProps> {
     render(): React.ReactNode {
         return (
-            <a aria-label="Modify Task" onClick={this.props.onClick}>✏️</a>
+            <a className='modify' aria-label="Modify Task" onClick={this.props.onClick}>✏️</a>
         )
     }
 }
