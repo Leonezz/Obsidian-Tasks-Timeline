@@ -1,19 +1,11 @@
-import moment, { Moment } from "moment";
 import { MarkdownRenderer } from "obsidian";
 import * as React from "react";
 import { getFileTitle } from "../../../dataview-util/dataview";
 import { TasksTimelineView } from "../../../src/views";
 import { TaskDataModel, recurrenceSymbol } from "../../../utils/tasks";
+import { relativeDate } from "../../../utils/utils";
 import * as Icons from './asserts/icons';
 import { TaskItemEventHandlersContext, UserOptionContext } from "./context";
-
-const getRelative = (someDate: Moment) => {
-    if (moment().diff(someDate, 'days') >= 1 || moment().diff(someDate, 'days') <= -1) {
-        return someDate.fromNow();
-    } else {
-        return someDate.calendar().split(' ')[0];
-    }
-};
 
 const defaultTaskItemProps = {
     taskItem: {} as TaskDataModel
@@ -76,23 +68,23 @@ export class TaskItemView extends React.Component<TaskItemProps, TaskItemState> 
                                         {item.created &&
                                             <DateStatusBadge //onClick={openTaskFile}
                                                 className='relative' ariaLabel={"create at " + item.created.format(dateFormat)}
-                                                label={getRelative(item.created)} icon={Icons.taskIcon} />}
+                                                label={relativeDate(item.created)} icon={Icons.taskIcon} />}
                                         {item.start &&
                                             <DateStatusBadge //onClick={openTaskFile}
                                                 className='relative' ariaLabel={"start at " + item.start.format(dateFormat)}
-                                                label={getRelative(item.start)} icon={Icons.startIcon} />}
+                                                label={relativeDate(item.start)} icon={Icons.startIcon} />}
                                         {item.scheduled &&
                                             <DateStatusBadge //onClick={openTaskFile}
                                                 className='relative' ariaLabel={"scheduled to " + item.scheduled.format(dateFormat)}
-                                                label={getRelative(item.scheduled)} icon={Icons.scheduledIcon} />}
+                                                label={relativeDate(item.scheduled)} icon={Icons.scheduledIcon} />}
                                         {item.due &&
                                             <DateStatusBadge //onClick={openTaskFile}
                                                 className='relative' ariaLabel={"due at " + item.due.format(dateFormat)}
-                                                label={getRelative(item.due)} icon={Icons.dueIcon} />}
+                                                label={relativeDate(item.due)} icon={Icons.dueIcon} />}
                                         {item.completion &&
                                             <DateStatusBadge //onClick={openTaskFile}
                                                 className='relative' ariaLabel={"complete at " + item.completion.format(dateFormat)}
-                                                label={getRelative(item.completion)} icon={Icons.doneIcon} />}
+                                                label={relativeDate(item.completion)} icon={Icons.doneIcon} />}
 
                                         {item.recurrence &&
                                             <DateStatusBadge //onClick={openTaskFile}
