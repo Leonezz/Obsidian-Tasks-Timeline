@@ -1,4 +1,4 @@
-import { App, FrontMatterCache, LinkCache, ListItemCache, Pos, SectionCache, TagCache, TFile } from "obsidian";
+import { App, FrontMatterCache, LinkCache, ListItemCache, Notice, Pos, SectionCache, TagCache, TFile } from "obsidian";
 import { Link } from "../../dataview-util/markdown";
 import { TaskDataModel, TaskRegularExpressions } from "../../utils/tasks";
 
@@ -74,19 +74,21 @@ export class ObsidianTaskAdapter {
         if (excludeTags.length !== 0)
             filteredFiles = filteredFiles.filter(this.fileExcludeTagsFilter(excludeTags));
 
-        filteredFiles.forEach(async (file: TFile) => {
-            const link = Link.file(file.path);
-            this.app.vault.cachedRead(file)
-                .then((content: string) => {
-                    const cache = this.app.metadataCache.getFileCache(file);
-                    cache?.listItems?.forEach(
-                        this.fromItemCache(link, file.path, content, cache.sections, cache.links, cache.frontmatter, cache.tags)
-                    );
-                })
-                .catch(reason => {
-                    console.error("Read file from obsidian cache failed: " + reason)
-                })
-        })
+        // Every read has to finish before the list is handed over. Without waiting, files that
+        // were not in Obsidian's read cache yet were silently left out, see issue #80.
+        const reads = await Promise.allSettled(filteredFiles.map(async (file: TFile) => {
+            const content = await this.app.vault.cachedRead(file);
+            const cache = this.app.metadataCache.getFileCache(file);
+            cache?.listItems?.forEach(
+                this.fromItemCache(Link.file(file.path), file.path, content, cache.sections, cache.links, cache.frontmatter, cache.tags)
+            );
+        }));
+
+        const failed = reads.filter((read): read is PromiseRejectedResult => read.status === "rejected");
+        if (failed.length > 0) {
+            failed.forEach(read => console.error("Tasks Calendar Wrapper: reading a file failed", read.reason));
+            new Notice(`Tasks Calendar Wrapper: ${failed.length} file(s) could not be read, their tasks are missing. See the developer console.`, 5000);
+        }
     }
 
     /**

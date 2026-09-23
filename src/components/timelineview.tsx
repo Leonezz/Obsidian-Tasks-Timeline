@@ -99,6 +99,7 @@ export class TimelineView extends React.Component<TimelineProps, TimelineStates>
             if (!this.props.userOptions.useRelative) styles.push("noRelative");
             if (!this.props.userOptions.useSection) styles.push("noHeader");
             if (!this.props.userOptions.useTags) styles.push("noTag");
+            if (!this.props.userOptions.useModifyBadge) styles.push("noModify");
         }
 
         const quickEntryFiles = new Set(this.props.userOptions.taskFiles);
