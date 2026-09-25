@@ -5,6 +5,7 @@ import { UserOption, defaultUserOptions } from '../../src/settings';
 import * as TaskMapable from '../../utils/taskmapable';
 import { insertTaskUnderSection, normalizeNotePath } from '../../utils/quickentry';
 import { TaskDataModel } from '../../utils/tasks';
+import { tasksPluginCommand } from '../../utils/utils';
 import { QuickEntryHandlerContext, TaskItemEventHandlersContext } from './components/context';
 import { TimelineView } from './components/timelineview';
 
@@ -137,8 +138,8 @@ export class ObsidianBridge extends React.Component<ObsidianBridgeProps, Obsidia
                         const editor = this.app.workspace.activeEditor?.editor;
                         if (editor) {
                             const view = this.app.workspace.getLeaf().view;
-                            //@ts-ignore
-                            this.app.commands.commands['obsidian-tasks-plugin:edit-task']
+                            //@ts-ignore commands is not part of the public API
+                            tasksPluginCommand(this.app.commands.commands, 'obsidian-tasks-plugin:edit-task')
                                 .editorCheckCallback(false, editor, view);
                         }
                     }
@@ -158,7 +159,8 @@ export class ObsidianBridge extends React.Component<ObsidianBridgeProps, Obsidia
     handleCompleteTask(path: string, position: Pos) {
         this.app.workspace.openLinkText('', path).then(() => {
             const file = this.app.workspace.getActiveFile();
-            this.app.workspace.getLeaf().openFile(file!, { state: { mode: "source" } });
+            if (!file) throw new Error("No such file: " + path);
+            this.app.workspace.getLeaf().openFile(file, { state: { mode: "source" } });
             this.app.workspace.activeEditor?.editor?.setSelection(
                 { line: position.start.line, ch: position.start.col },
                 { line: position.end.line, ch: position.end.col }
@@ -168,10 +170,14 @@ export class ObsidianBridge extends React.Component<ObsidianBridgeProps, Obsidia
             const editor = this.app.workspace.activeEditor?.editor;
             if (editor) {
                 const view = this.app.workspace.getLeaf().view;
-                //@ts-ignore
-                this.app.commands.commands['obsidian-tasks-plugin:toggle-done']
+                //@ts-ignore commands is not part of the public API
+                tasksPluginCommand(this.app.commands.commands, 'obsidian-tasks-plugin:toggle-done')
                     .editorCheckCallback(false, editor, view);
             }
+        }).catch(reason => {
+            // This used to be an uncaught error, so nothing happened and nothing was shown.
+            console.error("Tasks Calendar Wrapper: toggling a task failed", reason);
+            new Notice("Could not toggle the task in " + path + ": " + (reason instanceof Error ? reason.message : String(reason)), 5000);
         })
     }
 
