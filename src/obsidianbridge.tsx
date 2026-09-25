@@ -3,6 +3,7 @@ import { App, ItemView, Notice, Pos, moment } from 'obsidian';
 import * as React from 'react';
 import { UserOption, defaultUserOptions } from '../../src/settings';
 import * as TaskMapable from '../../utils/taskmapable';
+import { insertTaskUnderSection, normalizeNotePath } from '../../utils/quickentry';
 import { TaskDataModel } from '../../utils/tasks';
 import { QuickEntryHandlerContext, TaskItemEventHandlersContext } from './components/context';
 import { TimelineView } from './components/timelineview';
@@ -83,32 +84,28 @@ export class ObsidianBridge extends React.Component<ObsidianBridgeProps, Obsidia
     }
 
     handleCreateNewTask(path: string, append: string) {
-        const taskStr = "- [ ] " + append;
+        const notePath = normalizeNotePath(path);
+        this.appendTask(notePath, "- [ ] " + append)
+            .then(added => { if (added) this.onUpdateTasks(); })
+            .catch(reason => {
+                console.error("Tasks Calendar Wrapper: adding a task failed", reason);
+                new Notice("Could not add the task to " + notePath + ": " + reason, 5000);
+            });
+    }
+
+    /** Appends a task to a note, creating the note and its folder on request. Resolves to false when the user declines. */
+    private async appendTask(path: string, taskStr: string): Promise<boolean> {
         const section = this.state.userOptions.sectionForNewTasks;
-        this.app.vault.adapter.exists(path).then(exist => {
-            if (!exist && confirm("No such file: " + path + ". Would you like to create it?")) {
-                const content = section + "\n" + taskStr;
-                this.app.vault.create(path, content)
-                    .then(() => {
-                        this.onUpdateTasks();
-                    })
-                    .catch(reason => {
-                        return new Notice("Error when creating file " + path + " for new task: " + reason, 5000);
-                    });
-                return;
-            }
-            this.app.vault.adapter.read(path).then(content => {
-                const lines = content.split('\n');
-                lines.splice(lines.indexOf(section) + 1, 0, taskStr);
-                this.app.vault.adapter.write(path, lines.join("\n"))
-                    .then(() => {
-                        this.onUpdateTasks();
-                    })
-                    .catch(reason => {
-                        return new Notice("Error when writing new tasks to " + path + "." + reason, 5000);
-                    });
-            }).catch(reason => new Notice("Error when reading file " + path + "." + reason, 5000));
-        })
+        if (!(await this.app.vault.adapter.exists(path))) {
+            if (!confirm("No such file: " + path + ". Would you like to create it?")) return false;
+            const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : "";
+            if (folder !== "" && !(await this.app.vault.adapter.exists(folder))) await this.app.vault.createFolder(folder);
+            await this.app.vault.create(path, insertTaskUnderSection("", section, taskStr));
+            return true;
+        }
+        const content = await this.app.vault.adapter.read(path);
+        await this.app.vault.adapter.write(path, insertTaskUnderSection(content, section, taskStr));
+        return true;
     }
 
 
